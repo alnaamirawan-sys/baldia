@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الصيانة - بلدية محافظة صبيا</title>
+    <style>
+        :root {
+            --primary: #8B5A2B; 
+            --primary-light: #F4EBE1; 
+            --accent: #D2B48C; 
+            --background: #FAF6F0; 
+            --card: #ffffff;
+            --text: #3E2723; 
+            --border: #E6D7C3;
+            --success: #2E7D32;
+            --info: #0284c7;
+            --warning: #f59e0b;
+            --danger: #c23333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border-right: 6px solid var(--primary);
+            z-index: 9999;
+            display: none;
+            animation: slideDown 0.5s ease;
+            font-weight: bold;
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+
+        .container {
+            background: var(--card);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 12px 30px -5px rgba(139, 90, 43, 0.15);
+            width: 100%;
+            max-width: 850px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 220px;
+            height: auto;
+        }
+
+        h2 { color: var(--primary); margin: 10px 0 5px 0; font-size: 24px; font-weight: 700; }
+        .subtitle { color: #6D4C41; font-size: 14px; font-weight: 500; }
+
+        #loginView { padding: 20px; }
+        
+        .login-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab-btn {
+            background: none;
+            color: #6D4C41;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: auto;
+            margin-top: 0;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .login-box {
+            display: none;
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .login-box.active {
+            display: block;
+        }
+        
+        .form-group { margin-bottom: 20px; text-align: right; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #4E342E; font-size: 14px; }
+        
+        input, select, textarea {
+            width: 100%; padding: 12px 15px; border: 1px solid var(--border);
+            border-radius: 10px; box-sizing: border-box; font-size: 15px;
+            background-color: #FFFDFB; color: var(--text);
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(139, 90, 43, 0.15);
+        }
+        input[readonly] { background-color: var(--primary-light); cursor: not-allowed; }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        
+        button {
+            width: 100%; padding: 14px; background-color: var(--primary); color: white;
+            border: none; border-radius: 10px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: all 0.3s ease; margin-top: 10px;
+        }
+        button:hover { background-color: #6E451F; }
+
+        .admin-btn { background-color: #2E5A44; }
+        .admin-btn:hover { background-color: #1e3d2e; }
+
+        .action-container {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn {
+            background-color: var(--danger);
+            color: white;
+            padding: 6px 16px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            width: 75px;
+            margin-top: 0;
+            cursor: pointer;
+        }
+        .delete-btn:hover { background-color: #a12828; }
+
+        .print-btn {
+            background-color: var(--info);
+            color: white;
+            padding: 6px 16px;
+            font-size: 12px;
+            border: none;
+            border-radius: 6px;
+            width: 75px;
+            margin-top: 0;
+            cursor: pointer;
+        }
+        .print-btn:hover { background-color: #026ca3; }
+
+        .section-title {
+            font-size: 18px; color: var(--primary); font-weight: bold;
+            margin: 30px 0 15px 0; border-right: 4px solid var(--primary); padding-right: 10px;
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: center; }
+        th { background-color: var(--primary-light); color: var(--text); }
+        
+        .status-badge {
+            padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white;
+            display: inline-block;
+        }
+        
+        .logout-btn {
+            background-color: #b8860b; max-width: 150px; margin-bottom: 15px; padding: 8px; font-size: 14px;
+        }
+
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0; }
+            .logout-btn, .tab-btn, .login-tabs, button, .action-container, select, th:last-child, td:last-child {
+                display: none !important;
+            }
+            .header-section { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; }
+            table { width: 100%; border: 1px solid #000; }
+            th, td { border: 1px solid #000; padding: 10px; color: black !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="notificationToast" class="notification-toast"></div>
+
+<div class="container">
+    <div class="header-section">
+        <div class="logo-container">
+            <img src="https://images2.imgbox.com/39/1c/64X8r68O_o.jpg" id="mainLogo" alt="شعار أمانة منطقة جازان - بلدية محافظة صبيا" onerror="this.onerror=null; this.src='IMG_6371.jpeg';">
+        </div>
+        <h2 id="mainTitle">نظام إدارة الصيانة</h2>
+        <div class="subtitle" id="userWelcome">يرجى تسجيل الدخول للبدء</div>
+    </div>
+
+    <div id="loginView">
+        <div class="login-tabs">
+            <button id="empTab" class="tab-btn active" onclick="switchTab('employee')">تسجيل دخول الموظف</button>
+            <button id="adminTab" class="tab-btn" onclick="switchTab('admin')">تسجيل دخول المسؤول</button>
+        </div>
+
+        <div id="employeeLoginBox" class="login-box active">
+            <div class="form-group">
+                <label for="empLoginId">أدخل الرقم الوظيفي</label>
+                <input type="text" id="empLoginId" placeholder="00000">
+            </div>
+            <button style="max-width: 200px;" onclick="handleLogin('employee')">دخول كموظف</button>
+        </div>
+
+        <div id="adminLoginBox" class="login-box">
+            <div class="form-group">
+                <label for="adminLoginId">أدخل الرقم الوظيفي للمسؤول</label>
+                <input type="text" id="adminLoginId" placeholder="00000">
+            </div>
+            <button class="admin-btn" style="max-width: 200px;" onclick="handleLogin('admin')">دخول كمسؤول</button>
+        </div>
+    </div>
+
+    <div id="employeeView" style="display: none;">
+        <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+        <form id="municipalityForm" onsubmit="saveData(event)">
+            <div class="row">
+                <div class="form-group">
+                    <label>الاسم</label>
+                    <input type="text" id="employeeName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>المهنة / الوظيفة</label>
+                    <input type="text" id="employeeJob" readonly>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>الإيميل</label>
+                    <input type="email" id="employeeEmail" readonly>
+                </div>
+                <div class="form-group">
+                    <label>النظام</label>
+                    <select id="systemType" required>
+                        <option value="">-- اختر النظام --</option>
+                        <option value="أنظمة">أنظمة</option>
+                        <option value="أجهزة">أجهزة</option>
+                        <option value="طابعات">طابعات</option>
+                        <option value="ماسح ضوئي">ماسح ضوئي</option>
+                        <option value="شبكة نت">شبكة نت</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" id="detailsGroup" style="display: block;">
+                <label>اكتب تفاصيل وصنف المشكلة</label>
+                <textarea id="details" rows="3" placeholder="اكتب وصفاً واضحاً للمشكلة هنا ليتمكن المهندس من صيانتها..." required></textarea>
+            </div>
+            <button type="submit">حفظ طلب الصيانة بالنظام</button>
+        </form>
+
+        <div class="section-title">خانة طلباتي الحالية ومتابعة حالتها</div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>رقم الطلب</th>
+                        <th>النظام</th>
+                        <th>المشكلة</th>
+                        <th>التاريخ</th>
+                        <th>حالة الطلب</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="myRequestsTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="adminView" style="display: none;">
+        <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+        <div class="section-title">لوحة تحكم المسؤول - جميع طلبات الصيانة الواردة بالبلدية</div>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>الطلب</th>
+                        <th>الموظف</th>
+                        <th>النظام</th>
+                        <th>المشكلة</th>
+                        <th>التاريخ</th>
+                        <th>التحكم بالحالة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="allRequestsTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="employees.js"></script>
+
+<script>
+// تعريف المتغيرات العامة للنظام
+let employeesDatabase = {};
+let currentUser = null;
+let currentMode = "login";
+
+// نقوم بقراءة البيانات مباشرة من المتغير الموجود بالملف الخارجي بدون fetch وبدون مشاكل حظر
+if (typeof rawEmployeesData !== 'undefined') {
+    rawEmployeesData.forEach(emp => {
+      employeesDatabase[String(emp.id)] = {
+        name: emp.name,
+        job: emp.job_title,
+        email: emp.email || ""
+      };
+    });
+    console.log("تم تحميل قاعدة البيانات كاملة بنجاح! العدد:", Object.keys(employeesDatabase).length);
+} else {
+    console.error("خطأ: لم يتم العثور على ملف employees.js، تأكد من استدعائه بشكل صحيح.");
+}
+
+// دالة التبديل بين أزرار الموظف والمسؤول
+function switchTab(role) {
+    const empTab = document.getElementById('empTab');
+    const adminTab = document.getElementById('adminTab');
+    const empBox = document.getElementById('employeeLoginBox');
+    const adminBox = document.getElementById('adminLoginBox');
+
+    if (role === 'employee') {
+        empTab.classList.add('active');
+        adminTab.classList.remove('active');
+        empBox.classList.add('active');
+        adminBox.classList.remove('active');
+    } else {
+        adminTab.classList.add('active');
+        empTab.classList.remove('active');
+        adminBox.classList.add('active');
+        empBox.classList.remove('active');
+    }
+}
+
+// دالة التحقق وتوثيق الدخول بالرقم الوظيفي كاملاً
+function handleLogin(role) {
+    const inputId = role === 'employee' ? 'empLoginId' : 'adminLoginId';
+    const id = document.getElementById(inputId).value.trim();
+    
+    if (employeesDatabase[id]) {
+        currentUser = { id: id, ...employeesDatabase[id] };
+        document.getElementById('loginView').style.display = 'none';
+        
+        if(role === 'employee') {
+            document.getElementById('employeeView').style.display = 'block';
+            document.getElementById('userWelcome').textContent = `مرحباً بك: ${currentUser.name} (${currentUser.job})`;
+            document.getElementById('employeeName').value = currentUser.name;
+            document.getElementById('employeeJob').value = currentUser.job;
+            document.getElementById('employeeEmail').value = currentUser.email;
+            currentMode = "employee";
+            renderMyRequests();
+        } else {
+            document.getElementById('adminView').style.display = 'block';
+            document.getElementById('mainTitle').textContent = "لوحة تحكم مهندس الصيانة (المسؤول)";
+            document.getElementById('userWelcome').textContent = `المهندس المسؤول: ${currentUser.name}`;
+            currentMode = "admin";
+            renderAllRequests();
+        }
+    } else {
+        alert("الرقم الوظيفي الذي أدخلته غير مسجل بقاعدة البيانات حالياً!");
+    }
+}
+
+function logout() {
+    currentUser = null;
+    currentMode = "login";
+    document.getElementById('employeeView').style.display = 'none';
+    document.getElementById('adminView').style.display = 'none';
+    document.getElementById('loginView').style.display = 'block';
+    document.getElementById('mainTitle').textContent = "نظام إدارة الصيانة";
+    document.getElementById('userWelcome').textContent = "يرجى تسجيل الدخول للبدء";
+    document.getElementById('empLoginId').value = "";
+    document.getElementById('adminLoginId').value = "";
+}
+
+function saveData(event) {
+    event.preventDefault();
+    let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+    
+    const systemSelected = document.getElementById('systemType').value;
+    const problemSelected = document.getElementById('details').value.trim();
+    
+    const newReport = {
+        id: Date.now() + Math.floor(Math.random() * 100),
+        ticketId: "TK-" + Math.floor(1000 + Math.random() * 9000),
+        empId: currentUser.id,
+        empName: currentUser.name,
+        system: systemSelected,
+        problem: problemSelected,
+        date: new Date().toLocaleDateString('ar-SA'),
+        status: "جديد"
+    };
+
+    reports.push(newReport);
+    localStorage.setItem('subya_reports', JSON.stringify(reports));
+    
+    showToast("🔔 تم إرسال طلبك وحفظه في خانة الطلبات بنجاح!");
+    
+    document.getElementById('municipalityForm').reset();
+    renderMyRequests();
+}
+
+function renderMyRequests() {
+    let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+    const tbody = document.getElementById('myRequestsTable');
+    tbody.innerHTML = "";
+    
+    const myReports = reports.filter(r => r.empId === currentUser.id);
+    
+    if(myReports.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6'>لا توجد طلبات مرسلة حالياً باسمك.</td></tr>";
+        return;
+    }
+
+    myReports.forEach(r => {
+        tbody.innerHTML += `
+            <tr>
+                <td><b>${r.ticketId}</b></td>
+                <td>${r.system}</td>
+                <td>${r.problem}</td>
+                <td>${r.date}</td>
+                <td><span class="status-badge" style="background-color: #8B5A2B; color: white;">${r.status}</span></td>
+                <td>
+                    <div class="action-container">
+                        <button class="delete-btn" onclick="deleteRequest(${r.id})">حذف</button>
+                        <button class="print-btn" onclick="printSingleRequest(${r.id})">طباعة</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderAllRequests() {
+    let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+    const tbody = document.getElementById('allRequestsTable');
+    tbody.innerHTML = "";
+
+    if(reports.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='7'>لا توجد طلبات واردة في النظام بعد.</td></tr>";
+        return;
+    }
+
+    reports.forEach((r) => {
+        const statusOptions = ["جديد", "تثبيت", "صيانة", "فورمات", "ربط", "كلمة مرور"];
+        let selectOptions = "";
+        statusOptions.forEach(opt => {
+            selectOptions += `<option value="${opt}" ${r.status === opt ? "selected" : ""}>${opt}</option>`;
+        });
+
+        tbody.innerHTML += `
+            <tr>
+                <td><b>${r.ticketId}</b></td>
+                <td>${r.empName}</td>
+                <td>${r.system}</td>
+                <td>${r.problem}</td>
+                <td>${r.date}</td>
+                <td>
+                    <select onchange="changeStatusByUniqueId(${r.id}, this.value)" style="padding: 5px; border-radius: 5px;">
+                        ${selectOptions}
+                    </select>
+                </td>
+                <td>
+                    <div class="action-container">
+                        <button class="delete-btn" onclick="deleteRequest(${r.id})">حذف</button>
+                        <button class="print-btn" onclick="printSingleRequest(${r.id})">طباعة</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function deleteRequest(uniqueId) {
+    if (confirm("هل أنت متأكد من رغبتك في حذف هذا الطلب نهائياً؟")) {
+        let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+        reports = reports.filter(r => r.id !== uniqueId);
+        localStorage.setItem('subya_reports', JSON.stringify(reports));
+        
+        showToast("❌ تم حذف الطلب المحدد بنجاح!");
+        
+        if (currentMode === "employee") {
+            renderMyRequests();
+        } else if (currentMode === "admin") {
+            renderAllRequests();
+        }
+    }
+}
+
+function changeStatusByUniqueId(uniqueId, newStatus) {
+    let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+    const index = reports.findIndex(r => r.id === uniqueId);
+    if (index !== -1) {
+        reports[index].status = newStatus;
+        localStorage.setItem('subya_reports', JSON.stringify(reports));
+        showToast(`📢 تحديث فوري للحالة: الطلب ${reports[index].ticketId} تغير إلى (${newStatus})`);
+    }
+}
+
+function printSingleRequest(uniqueId) {
+    let reports = JSON.parse(localStorage.getItem('subya_reports')) || [];
+    const target = reports.find(r => r.id === uniqueId);
+    
+    if(!target) return;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html lang="ar" dir="rtl">
+        <head>
+            <title>تقرير طلب صيانة رقم \${target.ticketId}</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; text-align: center; color: #333; }
+                .header { border-bottom: 3px solid #8B5A2B; padding-bottom: 20px; margin-bottom: 40px; }
+                .header img { max-width: 240px; height: auto; }
+                h2 { color: #8B5A2B; margin-top: 15px; }
+                .info-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 16px; }
+                .info-table th, .info-table td { border: 1px solid #E6D7C3; padding: 14px; text-align: right; }
+                .info-table th { background-color: #F4EBE1; width: 30%; color: #3E2723; }
+                .footer { margin-top: 60px; font-size: 12px; color: #777; border-top: 1px dashed #ccc; padding-top: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <img src="https://images2.imgbox.com/39/1c/64X8r68O_o.jpg" alt="بلدية صبيا">
+                <h2>تقرير طلب صيانة رسمي</h2>
+                <p>نظام إدارة الصيانة - بلدية محافظة صبيا</p>
+            </div>
+            
+            <table class="info-table">
+                <tr><th>رقم الطلب الرسمي</th><td><b>\${target.ticketId}</b></td></tr>
+                <tr><th>اسم الموظف المرسل</th><td>\${target.empName}</td></tr>
+                <tr><th>النظام المستهدف</th><td>\${target.system}</td></tr>
+                <tr><th>تفاصيل وعنوان المشكلة</th><td>\${target.problem}</td></tr>
+                <tr><th>تاريخ تقديم الطلب</th><td>\${target.date}</td></tr>
+                <tr><th>حالة الطلب الحالية</th><td><span style="font-weight:bold; color:#8B5A2B;">\${target.status}</span></td></tr>
+            </table>
+
+            <div class="footer">
+                <p>طُبع هذا التقرير تلقائياً عبر نظام إدارة الصيانة الإلكتروني لبلدية صبيا.</p>
+            </div>
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 500);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function showToast(message) {
+    const toast = document.getElementById('notificationToast');
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4500);
+}
+</script>
+
+</body>
+</html>
